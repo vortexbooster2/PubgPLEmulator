@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pubgplemulator-eu
+    region: frankfurt
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.14.0
+      - key: YOUTUBE_DL_SKIP_PYTHON_CHECK
+        value: "1"
+      - key: YOUTUBE_DL_HOST
+        value: https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp
+      - key: YOUTUBE_COOKIES_BASE64
+        sync: false
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: GUILD_ID
+        sync: false

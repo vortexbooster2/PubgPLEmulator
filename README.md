@@ -1,0 +1,111 @@
+# EMUPLCOOM Bot
+
+Bot aktualizuje istniejącą strukturę serwera Discord dla społeczności emulatorów:
+
+- 17 ról administracyjnych, językowych, społecznościowych i platformowych,
+- 6 kategorii oraz 32 kanały tekstowe i głosowe,
+- prywatną strefę ekipy z odpowiednimi uprawnieniami,
+- kanał `#weryfikacja` oraz dostęp do pozostałych kanałów przez rolę `Zweryfikowany`,
+- regulamin, FAQ, powitanie i szablon zgłoszenia problemu,
+- panel ról obsługiwany przyciskami,
+- komendy `/setup`, `/emuplcoom`, `/test` i `/embed`.
+
+Komenda `/setup` nie usuwa ani nie przenosi kanałów i kategorii. Wyszukuje istniejące elementy po nazwie, aktualizuje ich ustawienia oraz odświeża wiadomości EMUPLCOOM. Na wyraźne życzenie właściciela może utworzyć tylko brakujący kanał `#o-gameloop`; wszystkie inne brakujące kanały są pomijane z ostrzeżeniem.
+
+## 1. Utworzenie aplikacji Discord
+
+1. Otwórz [Discord Developer Portal](https://discord.com/developers/applications).
+2. Wybierz **New Application** i nadaj nazwę `EMUPLCOOM`.
+3. Wejdź w **Bot**, utwórz bota i skopiuj token.
+4. Jako avatar ustaw plik `assets/emuplcoom-logo.png` dołączony do projektu.
+5. Nie publikuj tokenu i nie wklejaj go na Discordzie ani do repozytorium.
+6. W **OAuth2 → URL Generator** zaznacz zakresy `bot` i `applications.commands`.
+7. Na czas pierwszej konfiguracji zaznacz uprawnienie `Administrator` i dodaj bota na swój serwer.
+8. W ustawieniach ról serwera przesuń rolę bota wysoko — ponad role, którymi ma zarządzać.
+
+Bot nie wymaga włączania uprzywilejowanego **Message Content Intent**.
+
+## 2. Instalacja
+
+W folderze projektu skopiuj świeży Bot Token do schowka, a następnie uruchom:
+
+```powershell
+npm install
+powershell -ExecutionPolicy Bypass -File .\setup-env.ps1
+```
+
+Skrypt sprawdza token bez zapisywania go, tworzy `.env` bez BOM, ponownie
+weryfikuje zapisaną wartość i dopiero wtedy uruchamia bota. Nie wklejaj tokenu
+do kodu, czatu ani repozytorium.
+
+Aby skopiować identyfikator serwera, włącz w Discordzie **Tryb dewelopera**, kliknij serwer prawym przyciskiem i wybierz **Kopiuj identyfikator serwera**.
+
+## 3. Uruchomienie
+
+```powershell
+npm start
+```
+
+Po pojawieniu się bota online wpisz na serwerze:
+
+```text
+/setup
+```
+
+Komenda `/test` natychmiast potwierdza, czy aktywna instancja Rendera ma
+połączenie z Discord Gateway.
+
+Jeżeli komenda nie pojawia się na liście Discorda, zarejestruj ją ręcznie i ponownie uruchom bota:
+
+```powershell
+npm run register
+npm start
+```
+
+Komenda jest dostępna tylko dla administratorów. Jej wykonanie aktualizuje wyłącznie elementy już istniejące na serwerze.
+
+## Weryfikacja obsługiwana przez innego bota
+
+Komenda `/setup` tworzy lub wykorzystuje rolę o dokładnej nazwie `Zweryfikowany` i ustawia dostęp tak, aby osoba bez tej roli widziała tylko `#weryfikacja`. Skonfiguruj swojego bota weryfikacyjnego, aby po poprawnej weryfikacji nadawał właśnie tę rolę.
+
+Rola bota weryfikacyjnego musi znajdować się wyżej niż rola `Zweryfikowany` oraz posiadać uprawnienie **Zarządzanie rolami**. Istniejący kanał `#weryfikacja` zostanie zachowany i przeniesiony do kategorii `START`; indywidualne uprawnienia drugiego bota na tym kanale nie są usuwane.
+
+Kanały językowe są widoczne zależnie od wybranych ról: `🇵🇱 Polski` odblokowuje `#chat-pl`, a `🇬🇧 English` odblokowuje `#chat-gb`. Osoba z obiema rolami widzi oba czaty.
+
+## Bezpieczeństwo
+
+- `.env` jest ignorowany przez Git i nie powinien być nigdzie wysyłany.
+- Jeżeli token zostanie ujawniony, natychmiast zresetuj go w Developer Portal.
+- Ról `👑 Właściciel` i `🛡️ Administrator` nie przypisuj osobom, którym nie ufasz — mają pełne uprawnienia.
+- Bot niczego automatycznie nie usuwa.
+- Regulamin blokuje udostępnianie pirackich ROM-ów, BIOS-ów i linków do nich.
+
+## Hosting na Renderze (wariant bezpłatny)
+
+Projekt zawiera gotowy `render.yaml` i endpoint kontrolny `/health`.
+
+1. Umieść projekt w prywatnym repozytorium GitHub. Nie dodawaj pliku `.env`.
+2. W Render wybierz **New → Blueprint** i połącz repozytorium.
+3. Render wykryje usługę `emuplcoom-bot` jako bezpłatny Web Service.
+4. Podczas tworzenia wpisz bezpiecznie dwie wymagane zmienne:
+   - `DISCORD_TOKEN` — aktualny token bota,
+   - `GUILD_ID` — identyfikator serwera Discord.
+5. Poczekaj, aż w logach pojawią się komunikaty o zalogowaniu bota i działaniu `/health`.
+
+### Cookies YouTube dla odtwarzacza muzycznego
+
+Jeżeli YouTube blokuje adres IP Rendera komunikatem `Sign in to confirm you're not a bot`, wyeksportuj cookies YouTube w formacie Netscape z nowej sesji prywatnej/incognito, zamknij tę sesję bez ponownego otwierania YouTube, zakoduj cały plik jako base64 i dodaj wynik w Renderze jako tajną zmienną `YOUTUBE_COOKIES_BASE64`. Najbezpieczniej użyć oddzielnego konta przeznaczonego dla bota. Nie zapisuj cookies w `.env`, repozytorium, logach ani wiadomościach Discord.
+
+Bot zapisuje odkodowane cookies wyłącznie w chronionym pliku tymczasowym instancji, przekazuje jego ścieżkę do `yt-dlp` i usuwa go przy zamknięciu procesu. Po zmianie sekretu wykonaj nowy deploy.
+
+Po wdrożeniu otrzymasz adres podobny do:
+
+```text
+https://emuplcoom-bot.onrender.com/health
+```
+
+Repozytorium zawiera zadanie GitHub Actions, które sprawdza ten adres co 10 minut.
+Możesz je również uruchomić ręcznie w zakładce **Actions → Keep Render bot online**.
+Odpowiedź powinna mieć kod `200` i status `online`.
+
+Render usypia bezpłatny Web Service po 15 minutach bez ruchu przychodzącego. Bezpłatny limit wynosi 750 godzin na cały workspace w miesiącu, dlatego dwa stale działające serwisy mogą wyczerpać limit przed końcem miesiąca.
